@@ -20,6 +20,11 @@
   },
   "author": "POA network",
   "license": "GPLv3",
+  "config": {
+    "commitizen": {
+      "path": "cz-customizable"
+    }
+  },
   "dependencies": {
     "@0x/sol-coverage": "^3.0.5",
     "@0x/sol-trace": "^2.0.13",
