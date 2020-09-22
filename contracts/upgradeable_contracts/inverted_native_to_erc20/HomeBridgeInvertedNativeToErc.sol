@@ -5,15 +5,13 @@ import "../../upgradeability/EternalStorage.sol";
 import "../../interfaces/IBurnableMintableERC677Token.sol";
 import "../BasicHomeBridge.sol";
 import "../OverdrawManagement.sol";
-import "./RewardableHomeBridgeErcToErc.sol";
 import "../ERC677BridgeForBurnableMintableToken.sol";
 
-contract HomeBridgeErcToErc is
+contract HomeBridgeInvertedNativeToErc is
     EternalStorage,
     BasicHomeBridge,
     ERC677BridgeForBurnableMintableToken,
-    OverdrawManagement,
-    RewardableHomeBridgeErcToErc
+    OverdrawManagement
 {
     event AmountLimitExceeded(address recipient, uint256 value, bytes32 transactionHash);
 
@@ -44,74 +42,6 @@ contract HomeBridgeErcToErc is
         setInitialize();
 
         return isInitialized();
-    }
-
-    function rewardableInitialize(
-        address _validatorContract,
-        uint256 _dailyLimit,
-        uint256 _maxPerTx,
-        uint256 _minPerTx,
-        uint256 _homeGasPrice,
-        uint256 _requiredBlockConfirmations,
-        address _erc677token,
-        uint256 _foreignDailyLimit,
-        uint256 _foreignMaxPerTx,
-        address _owner,
-        address _feeManager,
-        uint256 _homeFee,
-        uint256 _foreignFee
-    ) external returns (bool) {
-        _rewardableInitialize(
-            _validatorContract,
-            _dailyLimit,
-            _maxPerTx,
-            _minPerTx,
-            _homeGasPrice,
-            _requiredBlockConfirmations,
-            _erc677token,
-            _foreignDailyLimit,
-            _foreignMaxPerTx,
-            _owner,
-            _feeManager,
-            _homeFee,
-            _foreignFee
-        );
-        setInitialize();
-
-        return isInitialized();
-    }
-
-    function _rewardableInitialize(
-        address _validatorContract,
-        uint256 _dailyLimit,
-        uint256 _maxPerTx,
-        uint256 _minPerTx,
-        uint256 _homeGasPrice,
-        uint256 _requiredBlockConfirmations,
-        address _erc677token,
-        uint256 _foreignDailyLimit,
-        uint256 _foreignMaxPerTx,
-        address _owner,
-        address _feeManager,
-        uint256 _homeFee,
-        uint256 _foreignFee
-    ) internal {
-        _initialize(
-            _validatorContract,
-            _dailyLimit,
-            _maxPerTx,
-            _minPerTx,
-            _homeGasPrice,
-            _requiredBlockConfirmations,
-            _erc677token,
-            _foreignDailyLimit,
-            _foreignMaxPerTx,
-            _owner
-        );
-        require(AddressUtils.isContract(_feeManager));
-        addressStorage[FEE_MANAGER_CONTRACT] = _feeManager;
-        _setFee(_feeManager, _homeFee, HOME_FEE);
-        _setFee(_feeManager, _foreignFee, FOREIGN_FEE);
     }
 
     function _initialize(
@@ -155,7 +85,7 @@ contract HomeBridgeErcToErc is
     }
 
     function getBridgeMode() external pure returns (bytes4 _data) {
-        return bytes4(keccak256(abi.encodePacked("erc-to-erc-core")));
+        return bytes4(keccak256(abi.encodePacked("inverted-native-to-erc-core")));
     }
 
     function setFrontierAddress(address _frontierAddress) public onlyOwner {
@@ -190,46 +120,19 @@ contract HomeBridgeErcToErc is
         return _from;
     }
 
-    function onExecuteAffirmation(address _recipient, uint256 _value, bytes32 txHash) internal returns (bool) {
+    function onExecuteAffirmation(address _recipient, uint256 _value, bytes32 /* txHash */) internal returns (bool) {
         setTotalExecutedPerDay(getCurrentDay(), totalExecutedPerDay(getCurrentDay()).add(_value));
-        uint256 valueToMint = _value;
-        address feeManager = feeManagerContract();
-        if (feeManager != address(0)) {
-            uint256 fee = calculateFee(valueToMint, false, feeManager, FOREIGN_FEE);
-            distributeFeeFromAffirmation(fee, feeManager, txHash);
-            valueToMint = valueToMint.sub(fee);
-        }
-
         address frontierAddress = getFrontierAddress();
 
         if(frontierAddress != address(0)){
-            return IBurnableMintableERC677Token(erc677token()).mint(this, valueToMint) && IBurnableMintableERC677Token(erc677token()).transferAndCall(frontierAddress, valueToMint, abi.encodePacked(_recipient));
+            return IBurnableMintableERC677Token(erc677token()).mint(this, _value) && IBurnableMintableERC677Token(erc677token()).transferAndCall(frontierAddress, _value, abi.encodePacked(_recipient));
         }else {
-            return IBurnableMintableERC677Token(erc677token()).mint(_recipient, valueToMint);
+            return IBurnableMintableERC677Token(erc677token()).mint(_recipient, _value);
         }
     }
 
     function fireEventOnTokenTransfer(address _from, uint256 _value) internal {
-        uint256 valueToTransfer = _value;
-        address feeManager = feeManagerContract();
-        if (feeManager != address(0)) {
-            uint256 fee = calculateFee(valueToTransfer, false, feeManager, HOME_FEE);
-            valueToTransfer = valueToTransfer.sub(fee);
-        }
-        emit UserRequestForSignature(_from, valueToTransfer);
-    }
-
-    function onSignaturesCollected(bytes _message) internal {
-        address feeManager = feeManagerContract();
-        if (feeManager != address(0)) {
-            address recipient;
-            uint256 amount;
-            bytes32 txHash;
-            address contractAddress;
-            (recipient, amount, txHash, contractAddress) = Message.parseMessage(_message);
-            uint256 fee = calculateFee(amount, true, feeManager, HOME_FEE);
-            distributeFeeFromSignatures(fee, feeManager, txHash);
-        }
+        emit UserRequestForSignature(_from, _value);
     }
 
     function onFailedAffirmation(address _recipient, uint256 _value, bytes32 _txHash) internal {

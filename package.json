@@ -15,7 +15,8 @@
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:sol:prettier:fix": "prettier --write \"contracts/**/*.sol\"",
     "watch-tests": "./node_modules/.bin/nodemon ./node_modules/.bin/truffle test --network test",
-    "coverage": "SOLIDITY_COVERAGE=true scripts/test.sh"
+    "coverage": "SOLIDITY_COVERAGE=true scripts/test.sh",
+    "commitmsg": "commitlint -E GIT_PARAMS"
   },
   "author": "POA network",
   "license": "GPLv3",
@@ -30,6 +31,10 @@
   },
   "devDependencies": {
     "@codechecks/client": "^0.1.5",
+    "@commitlint/cli": "^7.0.0",
+    "@commitlint/config-conventional": "^7.0.1",
+    "cz-customizable": "^5.2.0",
+    "husky": "^0.14.3",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-bn": "^0.1.1",

@@ -6,6 +6,7 @@ const ERC677BridgeToken = artifacts.require('ERC677BridgeToken.sol')
 const ERC677BridgeTokenRewardable = artifacts.require('ERC677BridgeTokenRewardable.sol')
 const FeeManagerErcToErcPOSDAO = artifacts.require('FeeManagerErcToErcPOSDAO.sol')
 const RewardableValidators = artifacts.require('RewardableValidators.sol')
+const FrontierMock = artifacts.require('FrontierMock.sol')
 const BlockReward = artifacts.require('BlockReward')
 const OldBlockReward = artifacts.require('OldBlockReward')
 
@@ -378,6 +379,33 @@ contract('HomeBridge_ERC20_to_ERC20', async accounts => {
       await homeBridge
         .executeAffirmation(recipient, value, transactionHash, { from: authorities[0] })
         .should.be.rejectedWith(ERROR_MSG)
+    })
+
+    it('should allow validator to withdraw through frontier', async () => {
+      const frontier = await FrontierMock.new(token.address, homeBridge.address)
+      await homeBridge.setFrontierAddress(frontier.address, { from: owner })
+
+      const recipient = accounts[5]
+      const value = halfEther
+      const balanceBefore = await token.balanceOf(recipient)
+      const transactionHash = '0x806335163828a8eda675cff9c84fa6e6c7cf06bb44cc6ec832e42fe789d01415'
+      const { logs } = await homeBridge.executeAffirmation(recipient, value, transactionHash, {
+        from: authorities[0]
+      })
+      expectEventInLogs(logs, 'SignedForAffirmation', {
+        signer: authorities[0],
+        transactionHash
+      })
+      expectEventInLogs(logs, 'AffirmationCompleted', {
+        recipient,
+        value,
+        transactionHash
+      })
+
+      const totalSupply = await token.totalSupply()
+      const balanceAfter = await token.balanceOf(recipient)
+      balanceAfter.should.be.bignumber.equal(balanceBefore.add(value))
+      totalSupply.should.be.bignumber.equal(value)
     })
 
     it('should allow validator to withdraw with zero value', async () => {
@@ -1509,6 +1537,35 @@ contract('HomeBridge_ERC20_to_ERC20', async accounts => {
 
       // When
       await token.transferAndCall(homeBridge.address, value, '0x00', { from: user }).should.be.fulfilled
+
+      // Then
+      const events = await getEvents(homeBridge, { event: 'UserRequestForSignature' })
+      expect(events[0].returnValues.recipient).to.be.equal(user)
+      expect(toBN(events[0].returnValues.value)).to.be.bignumber.equal(value)
+    })
+    it('should trigger UserRequestForSignature using frontier', async () => {
+      // Given
+      const frontier = await FrontierMock.new(token.address, homeBridge.address)
+      const owner = accounts[0]
+      const user = accounts[4]
+      await homeBridge.initialize(
+        validatorContract.address,
+        oneEther,
+        halfEther,
+        minPerTx,
+        gasPrice,
+        requireBlockConfirmations,
+        token.address,
+        foreignDailyLimit,
+        foreignMaxPerTx,
+        owner
+      ).should.be.fulfilled
+      await homeBridge.setFrontierAddress(frontier.address, { from: owner })
+      const value = halfEther
+      await token.mint(user, value, { from: owner }).should.be.fulfilled
+
+      // When
+      await token.transferAndCall(frontier.address, value, '0x00', { from: user }).should.be.fulfilled
 
       // Then
       const events = await getEvents(homeBridge, { event: 'UserRequestForSignature' })
