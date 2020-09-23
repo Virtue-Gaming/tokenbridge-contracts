@@ -11,7 +11,7 @@ const foreignPrefix = 'FOREIGN'
 
 // Validations and constants
 const evmVersions = [EVM_TYPES.BYZANTIUM, EVM_TYPES.SPURIOUSDRAGON]
-const validBridgeModes = ['NATIVE_TO_ERC', 'ERC_TO_ERC', 'ERC_TO_NATIVE']
+const validBridgeModes = ['NATIVE_TO_ERC', 'ERC_TO_ERC', 'ERC_TO_NATIVE', 'INVERTED_NATIVE_TO_ERC']
 const validRewardModes = ['false', 'ONE_DIRECTION', 'BOTH_DIRECTIONS']
 const validFeeManagerTypes = ['BRIDGE_VALIDATORS_REWARD', 'POSDAO_REWARD']
 const bigNumValidator = envalid.makeValidator(x => toBN(x))
