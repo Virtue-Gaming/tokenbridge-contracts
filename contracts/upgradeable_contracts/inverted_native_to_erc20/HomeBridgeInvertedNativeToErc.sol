@@ -92,41 +92,52 @@ contract HomeBridgeInvertedNativeToErc is
         addressStorage[keccak256(abi.encodePacked("frontierContract"))] = _frontierAddress;
     }
 
-    function getFrontierAddress() public view returns (address){
+    function getFrontierAddress() public view returns (address) {
         return addressStorage[keccak256(abi.encodePacked("frontierContract"))];
     }
 
-    function unpackWithdrawData(bytes _depositData) public pure returns(address recipient) {
+    function unpackWithdrawData(bytes _depositData) public pure returns (address recipient) {
         require(_depositData.length == 20, "Invalid data");
 
-        assembly { // Will be substituted with abi.decode on solidity 5.0
+        assembly {
+            // Will be substituted with abi.decode on solidity 5.0
             recipient := mload(add(_depositData, 20))
         }
 
         return (recipient);
-    }	    
+    }
 
     function getSenderOfTokenTransfer(
         address _from,
-        uint256 /* _value */,
+        uint256, /* _value */
         bytes _data
     ) internal returns (address) {
         address frontierAddress = getFrontierAddress();
 
-        if(frontierAddress != address(0)){
+        if (frontierAddress != address(0)) {
             require(_from == frontierAddress, "Frontier is not sender");
             return unpackWithdrawData(_data);
         }
         return _from;
     }
 
-    function onExecuteAffirmation(address _recipient, uint256 _value, bytes32 /* txHash */) internal returns (bool) {
+    function onExecuteAffirmation(
+        address _recipient,
+        uint256 _value,
+        bytes32 /* txHash */
+    ) internal returns (bool) {
         setTotalExecutedPerDay(getCurrentDay(), totalExecutedPerDay(getCurrentDay()).add(_value));
         address frontierAddress = getFrontierAddress();
 
-        if(frontierAddress != address(0)){
-            return IBurnableMintableERC677Token(erc677token()).mint(this, _value) && IBurnableMintableERC677Token(erc677token()).transferAndCall(frontierAddress, _value, abi.encodePacked(_recipient));
-        }else {
+        if (frontierAddress != address(0)) {
+            return
+                IBurnableMintableERC677Token(erc677token()).mint(this, _value) &&
+                    IBurnableMintableERC677Token(erc677token()).transferAndCall(
+                        frontierAddress,
+                        _value,
+                        abi.encodePacked(_recipient)
+                    );
+        } else {
             return IBurnableMintableERC677Token(erc677token()).mint(_recipient, _value);
         }
     }

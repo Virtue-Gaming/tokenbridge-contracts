@@ -53,7 +53,7 @@
     "eth-gas-reporter": "^0.2.9",
     "nodemon": "^1.17.3",
     "prettier": "^1.17.1",
-    "prettier-plugin-solidity": "^1.0.0-alpha.27",
+    "prettier-plugin-solidity": "1.0.0-alpha.32",
     "solhint": "^2.1.2",
     "solhint-plugin-prettier": "0.0.3",
     "truffle-flattener": "^1.2.3"

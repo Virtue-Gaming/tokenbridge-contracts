@@ -2,9 +2,7 @@ pragma solidity 0.4.24;
 
 import "../BasicForeignBridge.sol";
 
-contract ForeignBridgeInvertedNativeToErc is
-    BasicForeignBridge
-{
+contract ForeignBridgeInvertedNativeToErc is BasicForeignBridge {
     event UserRequestForAffirmation(address recipient, uint256 value);
 
     function initialize(
@@ -36,7 +34,7 @@ contract ForeignBridgeInvertedNativeToErc is
         uintStorage[EXECUTION_DAILY_LIMIT] = _homeDailyLimit;
         uintStorage[EXECUTION_MAX_PER_TX] = _homeMaxPerTx;
         setOwner(_owner);
-        
+
         setInitialize();
 
         emit RequiredBlockConfirmationChanged(_requiredBlockConfirmations);
@@ -46,7 +44,6 @@ contract ForeignBridgeInvertedNativeToErc is
 
         return isInitialized();
     }
-
 
     function getBridgeMode() external pure returns (bytes4 _data) {
         return bytes4(keccak256(abi.encodePacked("inverted-native-to-erc-core")));
