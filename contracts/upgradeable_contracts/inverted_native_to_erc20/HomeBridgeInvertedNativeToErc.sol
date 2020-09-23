@@ -156,5 +156,7 @@ contract HomeBridgeInvertedNativeToErc is
         emit AmountLimitExceeded(_recipient, _value, _txHash);
     }
 
-    function onSignaturesCollected(bytes) internal {}
+    function onSignaturesCollected(bytes) internal {
+        return;
+    }
 }
