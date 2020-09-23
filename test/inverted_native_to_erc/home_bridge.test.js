@@ -1243,4 +1243,33 @@ contract('HomeBridge_Inverted_Native_to_ERC20', async accounts => {
       expect(toBN(events[0].returnValues.value)).to.be.bignumber.equal(value)
     })
   })
+  describe('#setFrontierAddress', async () => {
+    let homeBridge
+    beforeEach(async () => {
+      homeBridge = await HomeBridge.new()
+      token = await ERC677BridgeToken.new('Some ERC20', 'TEST', 18)
+    })
+    it('should allow to change the frontier address to owners', async () => {
+      // Given
+      const frontier = await FrontierMock.new(token.address, homeBridge.address)
+      const owner = accounts[0]
+      await homeBridge.initialize(
+        validatorContract.address,
+        oneEther,
+        halfEther,
+        minPerTx,
+        gasPrice,
+        requireBlockConfirmations,
+        token.address,
+        foreignDailyLimit,
+        foreignMaxPerTx,
+        owner
+      ).should.be.fulfilled
+
+      await homeBridge.setFrontierAddress(frontier.address, { from: accounts[1] }).should.be.rejectedWith(ERROR_MSG)
+
+      await homeBridge.setFrontierAddress(frontier.address, { from: owner })
+      expect(await homeBridge.getFrontierAddress()).to.be.equal(frontier.address)
+    })
+  })
 })

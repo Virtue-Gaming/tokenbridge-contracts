@@ -6,10 +6,12 @@ const ForeignBridgeV2 = artifacts.require('ForeignBridgeV2.sol')
 
 const { expect } = require('chai')
 const { ERROR_MSG, ZERO_ADDRESS, toBN } = require('../setup')
-const { createMessage, sign, signatureToVRS, ether, getEvents, expectEventInLogs } = require('../helpers/helpers')
+const { createMessage, sign, signatureToVRS, ether, expectEventInLogs } = require('../helpers/helpers')
 
 const oneEther = ether('1')
 const halfEther = ether('0.5')
+const minPerTx = ether('0.01')
+const dailyLimit = ether('10')
 const requireBlockConfirmations = 8
 const gasPrice = web3.utils.toWei('1', 'gwei')
 const homeDailyLimit = oneEther
@@ -38,42 +40,78 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
       expect(await foreignBridge.requiredBlockConfirmations()).to.be.bignumber.equal(ZERO)
 
       await foreignBridge
-        .initialize(ZERO_ADDRESS, requireBlockConfirmations, gasPrice, maxPerTx, homeDailyLimit, homeMaxPerTx, owner)
-        .should.be.rejectedWith(ERROR_MSG)
-      await foreignBridge
         .initialize(
-          validatorContract.address,
-          requireBlockConfirmations,
+          ZERO_ADDRESS,
+          dailyLimit,
+          maxPerTx,
+          minPerTx,
           gasPrice,
-          maxPerTx,
-          homeDailyLimit,
-          homeMaxPerTx,
-          ZERO_ADDRESS
-        )
-        .should.be.rejectedWith(ERROR_MSG)
-      await foreignBridge
-        .initialize(validatorContract.address, 0, gasPrice, maxPerTx, homeDailyLimit, homeMaxPerTx, owner)
-        .should.be.rejectedWith(ERROR_MSG)
-      await foreignBridge
-        .initialize(
-          validatorContract.address,
           requireBlockConfirmations,
-          0,
-          maxPerTx,
           homeDailyLimit,
           homeMaxPerTx,
           owner
         )
         .should.be.rejectedWith(ERROR_MSG)
       await foreignBridge
-        .initialize(owner, requireBlockConfirmations, gasPrice, maxPerTx, homeDailyLimit, homeMaxPerTx, owner)
+        .initialize(
+          validatorContract.address,
+          dailyLimit,
+          maxPerTx,
+          minPerTx,
+          gasPrice,
+          requireBlockConfirmations,
+          homeDailyLimit,
+          homeMaxPerTx,
+          ZERO_ADDRESS
+        )
+        .should.be.rejectedWith(ERROR_MSG)
+      await foreignBridge
+        .initialize(
+          validatorContract.address,
+          dailyLimit,
+          maxPerTx,
+          minPerTx,
+          gasPrice,
+          0,
+          homeDailyLimit,
+          homeMaxPerTx,
+          owner
+        )
+        .should.be.rejectedWith(ERROR_MSG)
+      await foreignBridge
+        .initialize(
+          validatorContract.address,
+          dailyLimit,
+          maxPerTx,
+          minPerTx,
+          0,
+          requireBlockConfirmations,
+          homeDailyLimit,
+          homeMaxPerTx,
+          owner
+        )
+        .should.be.rejectedWith(ERROR_MSG)
+      await foreignBridge
+        .initialize(
+          owner,
+          dailyLimit,
+          maxPerTx,
+          minPerTx,
+          gasPrice,
+          requireBlockConfirmations,
+          homeDailyLimit,
+          homeMaxPerTx,
+          owner
+        )
         .should.be.rejectedWith(ERROR_MSG)
 
       const { logs } = await foreignBridge.initialize(
         validatorContract.address,
-        requireBlockConfirmations,
-        gasPrice,
+        dailyLimit,
         maxPerTx,
+        minPerTx,
+        gasPrice,
+        requireBlockConfirmations,
         homeDailyLimit,
         homeMaxPerTx,
         owner
@@ -86,6 +124,9 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
         requireBlockConfirmations.toString()
       )
       expect(await foreignBridge.gasPrice()).to.be.bignumber.equal(gasPrice)
+      expect(await foreignBridge.dailyLimit()).to.be.bignumber.equal(dailyLimit)
+      expect(await foreignBridge.maxPerTx()).to.be.bignumber.equal(maxPerTx)
+      expect(await foreignBridge.minPerTx()).to.be.bignumber.equal(minPerTx)
       const bridgeMode = '0x2d559eed' // 4 bytes of keccak256('inverted-native-to-erc-core')
       expect(await foreignBridge.getBridgeMode()).to.be.equal(bridgeMode)
       const { major, minor, patch } = await foreignBridge.getBridgeInterfacesVersion()
@@ -98,9 +139,102 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
       })
       expectEventInLogs(logs, 'GasPriceChanged', { gasPrice })
       expectEventInLogs(logs, 'ExecutionDailyLimitChanged', { newLimit: homeDailyLimit })
+      expectEventInLogs(logs, 'DailyLimitChanged', { newLimit: dailyLimit })
     })
   })
+  describe('#fallback', async () => {
+    let foreignBridge
 
+    beforeEach(async () => {
+      foreignBridge = await ForeignBridge.new()
+      await foreignBridge.initialize(
+        validatorContract.address,
+        '3',
+        '2',
+        '1',
+        gasPrice,
+        requireBlockConfirmations,
+        homeDailyLimit,
+        homeMaxPerTx,
+        owner
+      )
+    })
+    it('should accept native coins', async () => {
+      const currentDay = await foreignBridge.getCurrentDay()
+      expect(await foreignBridge.totalSpentPerDay(currentDay)).to.be.bignumber.equal(ZERO)
+
+      const { logs } = await foreignBridge.sendTransaction({
+        from: accounts[1],
+        value: 1
+      }).should.be.fulfilled
+      expect(await foreignBridge.totalSpentPerDay(currentDay)).to.be.bignumber.equal('1')
+
+      expectEventInLogs(logs, 'UserRequestForAffirmation', { recipient: accounts[1], value: toBN(1) })
+
+      await foreignBridge
+        .sendTransaction({
+          from: accounts[1],
+          value: 3
+        })
+        .should.be.rejectedWith(ERROR_MSG)
+
+      await foreignBridge.setDailyLimit(4).should.be.fulfilled
+      await foreignBridge.sendTransaction({
+        from: accounts[1],
+        value: 1
+      }).should.be.fulfilled
+
+      expect(await foreignBridge.totalSpentPerDay(currentDay)).to.be.bignumber.equal('2')
+    })
+
+    it('doesnt let you send more than max amount per tx', async () => {
+      await foreignBridge.sendTransaction({
+        from: accounts[1],
+        value: 1
+      }).should.be.fulfilled
+      await foreignBridge
+        .sendTransaction({
+          from: accounts[1],
+          value: 3
+        })
+        .should.be.rejectedWith(ERROR_MSG)
+      await foreignBridge.setMaxPerTx(100).should.be.rejectedWith(ERROR_MSG)
+      await foreignBridge.setDailyLimit(100).should.be.fulfilled
+      await foreignBridge.setMaxPerTx(99).should.be.fulfilled
+      // meets max per tx and daily limit
+      await foreignBridge.sendTransaction({
+        from: accounts[1],
+        value: 99
+      }).should.be.fulfilled
+      // above daily limit
+      await foreignBridge
+        .sendTransaction({
+          from: accounts[1],
+          value: 1
+        })
+        .should.be.rejectedWith(ERROR_MSG)
+    })
+
+    it('should not let to deposit less than minPerTx', async () => {
+      const newDailyLimit = 100
+      const newMaxPerTx = 50
+      const newMinPerTx = 20
+      await foreignBridge.setDailyLimit(newDailyLimit).should.be.fulfilled
+      await foreignBridge.setMaxPerTx(newMaxPerTx).should.be.fulfilled
+      await foreignBridge.setMinPerTx(newMinPerTx).should.be.fulfilled
+
+      await foreignBridge.sendTransaction({
+        from: accounts[1],
+        value: newMinPerTx
+      }).should.be.fulfilled
+      await foreignBridge
+        .sendTransaction({
+          from: accounts[1],
+          value: newMinPerTx - 1
+        })
+        .should.be.rejectedWith(ERROR_MSG)
+    })
+  })
   describe('#executeSignatures', async () => {
     const value = ether('0.25')
     let foreignBridge
@@ -108,16 +242,18 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
       foreignBridge = await ForeignBridge.new()
       await foreignBridge.initialize(
         validatorContract.address,
-        requireBlockConfirmations,
-        gasPrice,
+        dailyLimit,
         maxPerTx,
+        minPerTx,
+        gasPrice,
+        requireBlockConfirmations,
         homeDailyLimit,
         homeMaxPerTx,
         owner
       )
       await foreignBridge.sendTransaction({
         from: accounts[2],
-        value: halfEther
+        value
       }).should.be.fulfilled
     })
     it('should allow to executeSignatures', async () => {
@@ -196,10 +332,12 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
     it('should not allow withdraw over home max tx limit', async () => {
       const recipientAccount = accounts[3]
       const invalidValue = ether('0.75')
-      await foreignBridge.sendTransaction({
-        from: accounts[2],
-        value: ether('5')
-      }).should.be.fulfilled
+      for (let i = 0; i < 2; i++) {
+        await foreignBridge.sendTransaction({
+          from: accounts[2],
+          value: halfEther
+        }).should.be.fulfilled
+      }
 
       const transactionHash = '0x35d3818e50234655f6aebb2a1cfbf30f59568d8a4ec72066fac5a25dbe7b8121'
       const message = createMessage(recipientAccount, invalidValue, transactionHash, foreignBridge.address)
@@ -211,10 +349,12 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
 
     it('should not allow withdraw over daily home limit', async () => {
       const recipientAccount = accounts[3]
-      await foreignBridge.sendTransaction({
-        from: accounts[2],
-        value: ether('5')
-      }).should.be.fulfilled
+      for (let i = 0; i < 5; i++) {
+        await foreignBridge.sendTransaction({
+          from: accounts[2],
+          value: halfEther
+        }).should.be.fulfilled
+      }
 
       const transactionHash = '0x35d3818e50234655f6aebb2a1cfbf30f59568d8a4ec72066fac5a25dbe7b8121'
       const message = createMessage(recipientAccount, halfEther, transactionHash, foreignBridge.address)
@@ -254,9 +394,11 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
       foreignBridgeWithMultiSignatures = await ForeignBridge.new()
       await foreignBridgeWithMultiSignatures.initialize(
         multisigValidatorContract.address,
-        requireBlockConfirmations,
-        gasPrice,
+        dailyLimit,
         maxPerTx,
+        minPerTx,
+        gasPrice,
+        requireBlockConfirmations,
         homeDailyLimit,
         homeMaxPerTx,
         owner,
@@ -316,9 +458,11 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
 
       await foreignBridgeWithThreeSigs.initialize(
         validatorContractWith3Signatures.address,
-        requireBlockConfirmations,
-        gasPrice,
+        dailyLimit,
         maxPerTx,
+        minPerTx,
+        gasPrice,
+        requireBlockConfirmations,
         homeDailyLimit,
         homeMaxPerTx,
         owner
@@ -378,9 +522,11 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
       foreignBridgeProxy = await ForeignBridge.at(foreignBridgeProxy.address)
       await foreignBridgeProxy.initialize(
         validatorsProxy.address,
-        requireBlockConfirmations,
-        gasPrice,
+        dailyLimit,
         maxPerTx,
+        minPerTx,
+        gasPrice,
+        requireBlockConfirmations,
         homeDailyLimit,
         homeMaxPerTx,
         owner
@@ -403,7 +549,17 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
       const storageProxy = await EternalStorageProxy.new().should.be.fulfilled
       const foreignBridge = await ForeignBridge.new()
       const data = foreignBridge.contract.methods
-        .initialize(validatorsAddress, requireBlockConfirmations, gasPrice, '2', '3', '2', owner)
+        .initialize(
+          validatorsAddress,
+          dailyLimit.toString(),
+          maxPerTx.toString(),
+          minPerTx.toString(),
+          gasPrice,
+          requireBlockConfirmations,
+          homeDailyLimit.toString(),
+          homeMaxPerTx.toString(),
+          owner
+        )
         .encodeABI()
       await storageProxy.upgradeToAndCall('1', foreignBridge.address, data).should.be.fulfilled
       const finalContract = await ForeignBridge.at(storageProxy.address)
@@ -420,9 +576,11 @@ contract('ForeignBridge_Inverted_Native_to_ERC20', async accounts => {
       const foreignBridge = await ForeignBridge.at(storageProxy.address)
       await foreignBridge.initialize(
         validatorContract.address,
-        requireBlockConfirmations,
-        gasPrice,
+        dailyLimit,
         maxPerTx,
+        minPerTx,
+        gasPrice,
+        requireBlockConfirmations,
         homeDailyLimit,
         homeMaxPerTx,
         owner
