@@ -5,6 +5,7 @@ if [ -d flats ]; then
 fi
 
 mkdir -p flats/native_to_erc20
+mkdir -p flats/inverted_native_to_erc20
 mkdir -p flats/erc20_to_erc20
 mkdir -p flats/erc20_to_native
 mkdir -p flats/validators
@@ -29,6 +30,10 @@ ${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/native_to_erc20/HomeBridgeNativeToErc.sol >
 ${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/native_to_erc20/ClassicHomeBridgeNativeToErc.sol > flats/native_to_erc20/ClassicHomeBridgeNativeToErc_flat.sol
 ${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/native_to_erc20/FeeManagerNativeToErc.sol > flats/native_to_erc20/FeeManagerNativeToErc_flat.sol
 ${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/native_to_erc20/FeeManagerNativeToErcBothDirections.sol > flats/native_to_erc20/FeeManagerNativeToErcBothDirections_flat.sol
+
+echo "Flattening contracts related to inverted-native-to-erc bridge"
+${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/inverted_native_to_erc20/ForeignBridgeInvertedNativeToErc.sol > flats/inverted_native_to_erc20/ForeignBridgeInvertedNativeToErc_flat.sol
+${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/inverted_native_to_erc20/HomeBridgeInvertedNativeToErc.sol > flats/inverted_native_to_erc20/HomeBridgeInvertedNativeToErc_flat.sol
 
 echo "Flattening contracts related to erc-to-erc bridge"
 ${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/erc20_to_erc20/HomeBridgeErcToErc.sol > flats/erc20_to_erc20/HomeBridgeErcToErc_flat.sol
