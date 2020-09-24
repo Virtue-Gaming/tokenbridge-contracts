@@ -39,8 +39,12 @@ contract BasicBridge is Initializable, Validatable, Ownable, Upgradeable, Claima
         return uintStorage[GAS_PRICE];
     }
 
+    function validateRequiredBlockConfirmations(uint256 _blockConfirmations) internal returns (bool) {
+        return _blockConfirmations > 0;
+    }
+
     function setRequiredBlockConfirmations(uint256 _blockConfirmations) external onlyOwner {
-        require(_blockConfirmations > 0);
+        require(validateRequiredBlockConfirmations(_blockConfirmations));
         uintStorage[REQUIRED_BLOCK_CONFIRMATIONS] = _blockConfirmations;
         emit RequiredBlockConfirmationChanged(_blockConfirmations);
     }

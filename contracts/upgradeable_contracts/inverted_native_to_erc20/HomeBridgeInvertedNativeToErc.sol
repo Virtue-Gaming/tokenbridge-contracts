@@ -58,7 +58,7 @@ contract HomeBridgeInvertedNativeToErc is
     ) internal {
         require(!isInitialized());
         require(AddressUtils.isContract(_validatorContract));
-        require(_requiredBlockConfirmations > 0);
+        require(validateRequiredBlockConfirmations(_requiredBlockConfirmations));
         require(_minPerTx > 0 && _maxPerTx > _minPerTx && _dailyLimit > _maxPerTx);
         require(_foreignMaxPerTx < _foreignDailyLimit);
         require(_owner != address(0));
@@ -78,6 +78,12 @@ contract HomeBridgeInvertedNativeToErc is
         emit GasPriceChanged(_homeGasPrice);
         emit DailyLimitChanged(_dailyLimit);
         emit ExecutionDailyLimitChanged(_foreignDailyLimit);
+    }
+
+    function validateRequiredBlockConfirmations(
+        uint256 /* _blockConfirmations */
+    ) internal returns (bool) {
+        return true;
     }
 
     function claimTokensFromErc677(address _token, address _to) external onlyIfUpgradeabilityOwner {

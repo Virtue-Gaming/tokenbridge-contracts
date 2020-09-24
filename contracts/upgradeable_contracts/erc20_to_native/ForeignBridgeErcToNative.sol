@@ -18,7 +18,7 @@ contract ForeignBridgeErcToNative is BasicForeignBridge, ERC20Bridge {
     ) external returns (bool) {
         require(!isInitialized());
         require(AddressUtils.isContract(_validatorContract));
-        require(_requiredBlockConfirmations != 0);
+        require(validateRequiredBlockConfirmations(_requiredBlockConfirmations));
         require(_gasPrice > 0);
         require(_homeMaxPerTx < _homeDailyLimit);
         require(_owner != address(0));
