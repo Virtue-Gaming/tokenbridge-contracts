@@ -212,7 +212,6 @@ const env = envalid.cleanEnv(process.env, validations)
 // Logic validations
 checkValidators(env.VALIDATORS, env.REQUIRED_NUMBER_OF_VALIDATORS)
 checkGasPrices(env.FOREIGN_GAS_PRICE, foreignPrefix)
-checkBlockConfirmations(env.HOME_REQUIRED_BLOCK_CONFIRMATIONS, homePrefix)
 checkBlockConfirmations(env.FOREIGN_REQUIRED_BLOCK_CONFIRMATIONS, foreignPrefix)
 checkLimits(
   env.HOME_MIN_AMOUNT_PER_TX,

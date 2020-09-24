@@ -102,7 +102,7 @@ contract HomeBridgeNativeToErc is EternalStorage, BasicHomeBridge, RewardableHom
         require(!isInitialized());
         require(AddressUtils.isContract(_validatorContract));
         require(_homeGasPrice > 0);
-        require(_requiredBlockConfirmations > 0);
+        require(validateRequiredBlockConfirmations(_requiredBlockConfirmations));
         require(_minPerTx > 0 && _maxPerTx > _minPerTx && _dailyLimit > _maxPerTx);
         require(_foreignMaxPerTx < _foreignDailyLimit);
         require(_owner != address(0));

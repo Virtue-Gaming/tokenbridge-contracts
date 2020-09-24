@@ -19,7 +19,7 @@ contract ForeignBridgeInvertedNativeToErc is BasicForeignBridge {
         require(!isInitialized());
         require(AddressUtils.isContract(_validatorContract));
         require(_minPerTx > 0 && _maxPerTx > _minPerTx && _dailyLimit > _maxPerTx);
-        require(_requiredBlockConfirmations > 0);
+        require(validateRequiredBlockConfirmations(_requiredBlockConfirmations));
         require(_foreignGasPrice > 0);
         require(_homeMaxPerTx < _homeDailyLimit);
         require(_owner != address(0));

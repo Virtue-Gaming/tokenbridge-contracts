@@ -144,20 +144,6 @@ contract('HomeBridge_Inverted_Native_to_ERC20', async accounts => {
 
       await homeContract
         .initialize(
-          validatorContract.address,
-          '3',
-          '2',
-          '1',
-          gasPrice,
-          0,
-          token.address,
-          foreignDailyLimit,
-          foreignMaxPerTx,
-          owner
-        )
-        .should.be.rejectedWith(ERROR_MSG)
-      await homeContract
-        .initialize(
           owner,
           '3',
           '2',
