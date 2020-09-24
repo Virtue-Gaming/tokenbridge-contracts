@@ -9,6 +9,4 @@ cache:
 env:
     - $TASK=lint
     - $TASK=test
-    - $TASK=coverage
-    - $TASK=test:gasreport:ci
 script: "npm run $TASK"
