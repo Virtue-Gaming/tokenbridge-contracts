@@ -152,7 +152,7 @@ contract HomeBridgeErcToErc is
 
     function validateRequiredBlockConfirmations(
         uint256 /* _blockConfirmations */
-    ) internal returns (bool) {
+    ) internal pure returns (bool) {
         return true;
     }
 
@@ -172,12 +172,12 @@ contract HomeBridgeErcToErc is
         return addressStorage[keccak256(abi.encodePacked("frontierContract"))];
     }
 
-    function unpackWithdrawData(bytes _depositData) public pure returns (address recipient) {
-        require(_depositData.length == 20, "Invalid data");
+    function unpackWithdrawData(bytes _withdrawData) public pure returns (address recipient) {
+        require(_withdrawData.length == 20, "Invalid data");
 
         assembly {
             // Will be substituted with abi.decode on solidity 5.0
-            recipient := mload(add(_depositData, 20))
+            recipient := mload(add(_withdrawData, 20))
         }
 
         return (recipient);
