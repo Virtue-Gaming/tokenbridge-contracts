@@ -152,7 +152,7 @@ contract HomeBridgeErcToErc is
 
     function validateRequiredBlockConfirmations(
         uint256 /* _blockConfirmations */
-    ) internal returns (bool) {
+    ) internal pure returns (bool) {
         return true;
     }
 
