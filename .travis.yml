@@ -17,7 +17,6 @@ branches:
 
 before_script:
   - travis_retry npm install -g @commitlint/cli @commitlint/config-conventional
-  - curl -u $BINTRAY_USER:$BINTRAY_API_KEY https://api.bintray.com/npm/virtuegaming/virtue-poker/auth/scope/vp > .npmrc
   - echo @virtue-gaming:registry=https://npm.pkg.github.com/virtue-gaming >> ~/.npmrc
   - echo //npm.pkg.github.com/:_authToken=\"$GH_TOKEN\" >> ~/.npmrc
 
