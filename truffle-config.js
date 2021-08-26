@@ -1,6 +1,6 @@
-const { CoverageSubprovider, Web3ProviderEngine } = require('@0x/sol-coverage') // eslint-disable-line import/no-extraneous-dependencies
-const { TruffleArtifactAdapter } = require('@0x/sol-trace') // eslint-disable-line import/no-extraneous-dependencies
-const { GanacheSubprovider } = require('@0x/subproviders') // eslint-disable-line import/no-extraneous-dependencies
+const { CoverageSubprovider, Web3ProviderEngine } = require('@0x/sol-coverage')
+const { TruffleArtifactAdapter } = require('@0x/sol-trace')
+const { GanacheSubprovider } = require('@0x/subproviders')
 
 const spuriousDragonVersion = process.argv[3] === 'spuriousDragon'
 const contractsBuildDirectory = spuriousDragonVersion ? './build/spuriousDragon' : './build/contracts'
