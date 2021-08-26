@@ -1,6 +1,6 @@
 {
-  "name": "token-bridge-contracts",
-  "version": "2.4.0",
+  "name": "@virtue-gaming/virtue-poker-token-bridge-contracts",
+  "version": "0.0.1",
   "description": "Bridge",
   "main": "index.js",
   "scripts": {
@@ -14,9 +14,15 @@
     "lint:js:fix": "eslint . --fix",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:sol:prettier:fix": "prettier --write \"contracts/**/*.sol\"",
+    "build": "npm run build:abis",
+    "build:abis": "npm run clean:abis && mkdir abis && truffle compile && node scripts/extractAbis.js",
+    "beforeUpload": "npm run build",
+    "upload": "npm publish --registry='https://npm.pkg.github.com/virtue-gaming' --verbose",
     "watch-tests": "./node_modules/.bin/nodemon ./node_modules/.bin/truffle test --network test",
     "coverage": "SOLIDITY_COVERAGE=true scripts/test.sh",
-    "commitmsg": "commitlint -E GIT_PARAMS"
+    "commitmsg": "commitlint -E GIT_PARAMS",
+    "clean:truffle_build_folder": "(rm -r build || true)",
+    "clean:abis": "(rm -r abis || true)"
   },
   "author": "POA network",
   "license": "GPLv3",
@@ -25,21 +31,19 @@
       "path": "cz-customizable"
     }
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "@0x/sol-coverage": "^3.0.5",
     "@0x/sol-trace": "^2.0.13",
     "@0x/subproviders": "^4.1.0",
-    "ganache-cli": "^6.4.3",
-    "istanbul": "^0.4.5",
-    "openzeppelin-solidity": "1.12.0",
-    "truffle": "^5.0.15"
-  },
-  "devDependencies": {
     "@codechecks/client": "^0.1.5",
     "@commitlint/cli": "^7.0.0",
     "@commitlint/config-conventional": "^7.0.1",
     "cz-customizable": "^5.2.0",
+    "fs-extra": "^8.1.0",
+    "ganache-cli": "^6.4.3",
     "husky": "^0.14.3",
+    "istanbul": "^0.4.5",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-bn": "^0.1.1",
@@ -52,10 +56,31 @@
     "eslint-plugin-prettier": "^3.0.1",
     "eth-gas-reporter": "^0.2.9",
     "nodemon": "^1.17.3",
+    "openzeppelin-solidity": "1.12.0",
     "prettier": "^1.17.1",
     "prettier-plugin-solidity": "1.0.0-alpha.32",
     "solhint": "^2.1.2",
     "solhint-plugin-prettier": "0.0.3",
+    "truffle": "^5.0.15",
     "truffle-flattener": "^1.2.3"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/virtue-gaming/"
+  },
+  "repository": "https://github.com/Virtue-Gaming/virtue-poker-core-contracts",
+  "release": {
+    "branch": "master",
+    "verifyConditions": [
+      "@semantic-release/npm",
+      "@semantic-release/git"
+    ],
+    "prepare": [
+      "@semantic-release/npm",
+      "@semantic-release/git"
+    ],
+    "publish": [
+      "@semantic-release/npm",
+      "@semantic-release/github"
+    ]
   }
 }

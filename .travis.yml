@@ -1,12 +1,34 @@
-dist: trusty
-sudo: required
-group: beta
 language: node_js
 node_js:
-  - "10"
+  - 9
+
 cache:
-  yarn: true
-env:
-    - $TASK=lint
-    - $TASK=test
-script: "npm run $TASK"
+  npm: false
+git:
+  depth: false
+
+# safelist
+branches:
+  only:
+  - feature/travis-integration
+  - master
+  - develop
+  - /^greenkeeper/
+
+before_script:
+  - travis_retry npm install -g @commitlint/cli @commitlint/config-conventional
+  - echo @virtue-gaming:registry=https://npm.pkg.github.com/virtue-gaming >> ~/.npmrc
+  - echo //npm.pkg.github.com/:_authToken=\"$GH_TOKEN\" >> ~/.npmrc
+
+stages:
+  - name: test
+    if: type = pull_request OR branch != master
+  - name: release
+    if: type != pull_request AND branch = master
+
+jobs:
+  include:
+    - stage: test
+      script: npm run lint && npm run test
+    - stage: release
+      script: npm run lint && npm run test && npm run beforeUpload && npx semantic-release

@@ -1,0 +1,38 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+.git
+
+#source
+contracts/
+lib/
+build/
+deploy/
+
+# testing
+coverage
+flats
+coverage.json
+.nyc_output
+test
+.solcover.js
+
+#utils
+scripts
+tools
+truffle.js
+truffle-config.js
+migrations
+migration_utils
+*.sh
+Dockerfile
+
+# misc
+npm-debug.log
+.*
+yarn.lock
+*.md
+obfuscator.json
+docs
+*.yml
