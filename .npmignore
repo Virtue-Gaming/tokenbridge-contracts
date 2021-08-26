@@ -8,6 +8,7 @@ node_modules
 contracts/
 lib/
 build/
+deploy/
 
 # testing
 coverage
@@ -24,19 +25,14 @@ truffle.js
 truffle-config.js
 migrations
 migration_utils
+*.sh
+Dockerfile
 
 # misc
-.DS_Store
-.env
 npm-debug.log
-.babelrc
-.commitlintrc.js
-.cz-config.js
-.editorconfig
-.eslintignore
-.eslintrc.json
-.travis.yml
+.*
 yarn.lock
-README.md
+*.md
 obfuscator.json
 docs
+*.yml
