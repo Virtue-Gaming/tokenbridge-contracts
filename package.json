@@ -39,6 +39,7 @@
     "@codechecks/client": "^0.1.5",
     "@commitlint/cli": "^7.0.0",
     "@commitlint/config-conventional": "^7.0.1",
+    "@semantic-release/git": "^7.0.1",
     "cz-customizable": "^5.2.0",
     "fs-extra": "^8.1.0",
     "ganache-cli": "^6.4.3",
@@ -59,6 +60,7 @@
     "openzeppelin-solidity": "1.12.0",
     "prettier": "^1.17.1",
     "prettier-plugin-solidity": "1.0.0-alpha.32",
+    "semantic-release": "^15.9.9",
     "solhint": "^2.1.2",
     "solhint-plugin-prettier": "0.0.3",
     "truffle": "^5.0.15",
@@ -67,7 +69,7 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/virtue-gaming/"
   },
-  "repository": "https://github.com/Virtue-Gaming/virtue-poker-core-contracts",
+  "repository": "https://github.com/Virtue-Gaming/tokenbridge-contracts",
   "release": {
     "branch": "master",
     "verifyConditions": [
