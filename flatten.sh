@@ -9,6 +9,7 @@ mkdir -p flats/inverted_native_to_erc20
 mkdir -p flats/erc20_to_erc20
 mkdir -p flats/erc20_to_native
 mkdir -p flats/validators
+mkdir -p flats/tokens
 
 FLATTENER=./node_modules/.bin/truffle-flattener
 BRIDGE_CONTRACTS_DIR=contracts/upgradeable_contracts
@@ -48,4 +49,4 @@ ${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/erc20_to_native/ForeignBridgeErcToNative.so
 ${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/erc20_to_native/FeeManagerErcToNative.sol > flats/erc20_to_native/FeeManagerErcToNative_flat.sol
 ${FLATTENER} ${BRIDGE_CONTRACTS_DIR}/erc20_to_native/FeeManagerErcToNativePOSDAO.sol > flats/erc20_to_native/FeeManagerErcToNativePOSDAO_flat.sol
 
-
+${FLATTENER} contracts/CustomizableERC677BridgeToken.sol > flats/tokens/CustomizableERC677BridgeToken.sol

@@ -145,6 +145,26 @@ async function deployInvertedNativeToErc(){
   console.log('Contracts Deployment have been saved to `bridgeDeploymentResults.json`')
 }
 
+async function deployToken() {
+  const deployTokenInHome = require('./src/tokens/customizableBridgeToken')
+
+  const { token } = await deployTokenInHome()
+  console.log('\nDeployment has been completed.\n\n')
+  console.log(`[ Home ] Token: ${token.address}`)
+
+  fs.writeFileSync(
+    deployResultsPath,
+    JSON.stringify(
+      {
+        ...token
+      },
+      null,
+      4
+    )
+  )
+  console.log('Contracts Deployment have been saved to `bridgeDeploymentResults.json`')
+}
+
 async function main() {
   console.log(`Bridge mode: ${BRIDGE_MODE}`)
   switch (BRIDGE_MODE) {
@@ -159,6 +179,9 @@ async function main() {
       break    
     case 'INVERTED_NATIVE_TO_ERC':
       await deployInvertedNativeToErc()
+      break
+    case 'TOKEN_ONLY':
+      await deployToken()
       break
     default:
       console.log(BRIDGE_MODE)

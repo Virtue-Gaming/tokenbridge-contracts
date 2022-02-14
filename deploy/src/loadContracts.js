@@ -33,7 +33,8 @@ function getContracts(evmVersion) {
     HomeBridgeNativeToErc: useClassicProxy
       ? require(`../../build/${buildPath}/ClassicHomeBridgeNativeToErc.json`)
       : require(`../../build/${buildPath}/HomeBridgeNativeToErc.json`),
-    BlockReward: require(`../../build/${buildPath}/BlockReward.json`)
+    BlockReward: require(`../../build/${buildPath}/BlockReward.json`),
+    CustomizableERC677BridgeToken: require(`../../build/${buildPath}/CustomizableERC677BridgeToken.json`)
   }
 }
 
