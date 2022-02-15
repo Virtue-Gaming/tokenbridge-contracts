@@ -47,7 +47,6 @@ async function deployToken() {
     url: HOME_RPC_URL
   })
   assert.strictEqual(Web3Utils.hexToNumber(txTokenOwnership.status), 1, 'Transaction Failed')
-  homeNonce++
 
   console.log('\nHome Deployment Token completed\n')
   return {
