@@ -1,6 +1,6 @@
 {
   "name": "@virtue-gaming/virtue-poker-token-bridge-contracts",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Bridge",
   "main": "index.js",
   "scripts": {
