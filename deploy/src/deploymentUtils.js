@@ -14,21 +14,26 @@ const {
   GAS_LIMIT_EXTRA,
   HOME_DEPLOYMENT_GAS_PRICE,
   FOREIGN_DEPLOYMENT_GAS_PRICE,
-  GET_RECEIPT_INTERVAL_IN_MILLISECONDS
+  GET_RECEIPT_INTERVAL_IN_MILLISECONDS,
+  FOREIGN_CHAIN_ID,
+  HOME_CHAIN_ID,
 } = require('./web3')
 
 async function deployContract(contractJson, args, { from, network, nonce }) {
   let web3
   let url
   let gasPrice
+  let chainId
   if (network === 'foreign') {
     web3 = web3Foreign
     url = FOREIGN_RPC_URL
     gasPrice = FOREIGN_DEPLOYMENT_GAS_PRICE
+    chainId = FOREIGN_CHAIN_ID
   } else {
     web3 = web3Home
     url = HOME_RPC_URL
     gasPrice = HOME_DEPLOYMENT_GAS_PRICE
+    chainId = HOME_CHAIN_ID
   }
   const options = {
     from
@@ -46,7 +51,8 @@ async function deployContract(contractJson, args, { from, network, nonce }) {
     to: null,
     privateKey: deploymentPrivateKey,
     url,
-    gasPrice
+    gasPrice,
+    chainId
   })
   if (Web3Utils.hexToNumber(tx.status) !== 1 && !tx.contractAddress) {
     throw new Error('Tx failed')
@@ -59,18 +65,20 @@ async function deployContract(contractJson, args, { from, network, nonce }) {
 async function sendRawTxHome(options) {
   return sendRawTx({
     ...options,
-    gasPrice: HOME_DEPLOYMENT_GAS_PRICE
+    gasPrice: HOME_DEPLOYMENT_GAS_PRICE,
+    chainId: HOME_CHAIN_ID
   })
 }
 
 async function sendRawTxForeign(options) {
   return sendRawTx({
     ...options,
-    gasPrice: FOREIGN_DEPLOYMENT_GAS_PRICE
+    gasPrice: FOREIGN_DEPLOYMENT_GAS_PRICE,
+    chainId: FOREIGN_CHAIN_ID
   })
 }
 
-async function sendRawTx({ data, nonce, to, privateKey, url, gasPrice, value }) {
+async function sendRawTx({ data, nonce, to, privateKey, url, gasPrice, value, chainId }) {
   try {
     const txToEstimateGas = {
       from: privateKeyToAddress(Web3Utils.bytesToHex(privateKey)),
@@ -100,7 +108,8 @@ async function sendRawTx({ data, nonce, to, privateKey, url, gasPrice, value }) 
       gasLimit: Web3Utils.toHex(gas),
       to,
       data,
-      value
+      value,
+      chainId
     }
 
     const tx = new Tx(rawTx)

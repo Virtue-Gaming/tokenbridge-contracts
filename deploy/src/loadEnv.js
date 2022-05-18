@@ -121,6 +121,8 @@ let validations = {
   DEPLOYMENT_ACCOUNT_PRIVATE_KEY: envalid.str(),
   DEPLOYMENT_GAS_LIMIT_EXTRA: envalid.num(),
   GET_RECEIPT_INTERVAL_IN_MILLISECONDS: bigNumValidator(),
+  FOREIGN_CHAIN_ID: envalid.num({default: undefined}),
+  HOME_CHAIN_ID:  envalid.num({default: undefined}),
 }
 
 if(completeBridgeModes.includes(BRIDGE_MODE)){
